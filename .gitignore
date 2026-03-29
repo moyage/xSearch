@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+.DS_Store
+coverage/
+*.log
+retest-v2-output.txt
+retest-v2-results.json
+tavily-results.json
+strategy-analysis.json
+demo-report.json
