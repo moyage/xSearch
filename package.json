@@ -1,7 +1,7 @@
 {
   "name": "xsearch",
-  "version": "1.0.0",
-  "description": "XSearch - 智能搜索增强技能，提供强大的外部信息搜索、检索、分析和可视化能力",
+  "version": "6.0.0",
+  "description": "XSearch V6 (Protocol Hijacker) - Next-generation API/MCP hijacking search engine for AI Agents.",
   "main": "dist/skills/xsearchSkill.js",
   "types": "dist/skills/xsearchSkill.d.ts",
   "scripts": {
@@ -29,12 +29,15 @@
   },
   "homepage": "https://github.com/moyage/xSearch#readme",
   "dependencies": {
-    "playwright": "^1.40.0",
     "axios": "^1.6.0",
     "cheerio": "^1.0.0-rc.12"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.8.0",
+    "fintec-agent-laws": "file:../labs-teamwork-spec",
+    "jest": "^30.3.0",
+    "ts-jest": "^29.4.9",
     "typescript": "^5.2.2"
   },
   "engines": {
@@ -42,8 +45,8 @@
   },
   "openclaw": {
     "skillName": "xsearch",
-    "displayName": "XSearch 智能搜索",
-    "description": "智能搜索增强技能，支持多源搜索、浏览器自动化、内容提取和数据分析",
+    "displayName": "XSearch V6 API Hijacker",
+    "description": "Zero-DOM-dependency, high-speed API and MCP protocol hijacking search engine. Designed to bypass Cloudflare and paginate infinitely via native APIs.",
     "category": "data-collection",
     "entryPoint": "dist/skills/xsearchSkill.js",
     "permissions": [
@@ -51,16 +54,25 @@
       "filesystem"
     ],
     "config": {
-      "tavilyApiKey": {
-        "type": "string",
-        "description": "Tavily API Key (可选)",
-        "required": false
-      },
       "defaultProvider": {
         "type": "string",
-        "description": "默认搜索提供商",
-        "default": "tavily",
-        "options": ["tavily", "browser", "hybrid"]
+        "description": "Default search provider (apiHijacker or tavily)",
+        "default": "apiHijacker",
+        "options": [
+          "apiHijacker",
+          "tavily",
+          "browser"
+        ]
+      },
+      "tavilyApiKey": {
+        "type": "string",
+        "description": "Tavily API Key (Optional)",
+        "required": false
+      },
+      "apiHijacker": {
+        "type": "object",
+        "description": "Configuration for the Protocol Hijacker mode (Base URL, Pagination Rules)",
+        "required": false
       }
     }
   }

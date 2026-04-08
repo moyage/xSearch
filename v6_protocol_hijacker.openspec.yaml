@@ -1,0 +1,48 @@
+spec_version: "2.0"
+name: "xsearch_v6_protocol_hijacker"
+description: "V6 Protocol Hijacker Architecture for xSearch. Strips out heavy browser DOM-scraping dependencies in favor of lightweight, high-performance MCP and direct REST API hijacking to bypass Cloudflare and pagination traps."
+target_path: /Users/mlabs/Programs/xsearch
+
+architecture:
+  paradigm: "OHO (OpenClaw-Hermes-Opencode) - FinTec Agent Laws Compliant"
+  components:
+    orchestrator:
+      role: "OpenClaw"
+      responsibilities:
+        - "Event loop and lifecycle management."
+    analyzer:
+      role: "Hermes"
+      responsibilities:
+        - "Pre-computation of optimal extraction paths."
+    executor:
+      role: "Opencode"
+      responsibilities:
+        - "Refactor `SearchEngine` to prioritize Direct API/MCP interaction over DOM manipulation."
+        - "Implement `ApiHijackerProvider` class that natively supports `Bearer` auth, rate-limit backpressure (429 handling), and pagination override (ignoring false `total` fields)."
+
+workflow_phases:
+  phase_1_cleanup:
+    owner: "Opencode"
+    description: "Remove direct dependencies on heavy browsers (`playwright`, `puppeteer`) from `package.json` to adhere to the strict Complexity Budget. If browser is needed, it must be an optional peer dependency or cloud API (Browserbase)."
+  phase_2_api_hijacker:
+    owner: "Opencode"
+    description: "Create `ApiHijackerProvider` supporting direct HTTP pagination with auto-retry on 429 and `hasNext` loop checking."
+  phase_3_mcp_tunneling:
+    owner: "Opencode"
+    description: "Add native support for `@modelcontextprotocol/sdk` to query data via MCP standard tools if the target exposes an MCP server."
+
+constraints:
+  non_goals:
+    - "Do not implement new DOM-clicking cognitive logic."
+  cognitive_guardrails:
+    - "Never trust an API's `pagination.total` field blindly. Always check if the returned array is empty."
+    - "Handle `429 Too Many Requests` gracefully by sleeping and retrying, rather than failing the extraction run."
+
+acceptance_criteria:
+  - id: AC1_Lightweight_Core
+    description: "The core `xSearch` project must not have `playwright` or `puppeteer` as a direct `dependency`. It must build successfully."
+  - id: AC2_API_Hijacker_Provider
+    description: "`ApiHijackerProvider` handles `limit` parameter enforcement and loops until an empty array is returned."
+  - id: AC3_ADR_Compliance
+    description: "The implementation matches the ADR `docs/ADR/002_v6_api_hijacker_shift.md`."
+

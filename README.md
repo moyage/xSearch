@@ -1,73 +1,64 @@
-# XSearch
+# XSearch V6 (Protocol Hijacker)
 
-智能搜索增强技能 - 为 OpenClaw 及类 Claw 系统提供强大的外部信息搜索、检索、分析和可视化能力。
+**XSearch V6** has been completely reimagined from a "Headless Browser Scraper" to a **"Native API/MCP Protocol Hijacker"**. 
 
-## 核心特性
+Designed natively for OpenClaw, NanoClaw, Hermes, and any MCP-compatible autonomous agents, xSearch bypasses Cloudflare walls, ignores deceptive pagination caps, and extracts structured data at microsecond latency with **zero-token cognitive overhead**.
 
-- **插件式安装**：一键安装，开箱即用
-- **零配置启动**：简单场景无需配置，复杂场景灵活配置  
-- **智能降级**：从"零Token"到"全功能"的无缝切换
-- **搜索能力顶级**：应对从简单页面到复杂动态网站的各种场景
-- **Token 控制**：预算管理、实时预警、智能降级
-- **进度可视化**：流式输出、进度条、避免黑盒体验
-- **结果可视化**：图表、知识图谱、信息图生成
+## Why V6? (The Paradigm Shift)
+*   **WAF Bypass**: No more dealing with `cf-mitigated: challenge` blocks by Playwright. xSearch connects via native HTTP/RPC and MCP (`@modelcontextprotocol/sdk`).
+*   **Infinite Pagination Liar-Filter**: Many APIs lie about their `total` count to stop scrapers. XSearch probes until it receives an empty array, bypassing fake limits (e.g. turning 50 results into 1,800+).
+*   **Rate-Limit Backpressure**: Built-in exponential backoff for `HTTP 429 Too Many Requests`. Never crash on a rate limit again.
+*   **Extreme Complexity Budget**: Stripped of heavy browser kernels. Deploy instantly on Edge workers or Serverless.
 
-## 快速开始
+## One-Click Installation
 
-### 安装
+xSearch is packaged as a standard Skill for OpenClaw/NanoClaw. You can install it directly from the marketplace or git:
 
 ```bash
-git clone https://github.com/moyage/xSearch.git
-cd xSearch
-npm install
-npm run build
-npm link
+openclaw skill install github:moyage/xSearch
+# OR locally
+openclaw skill install /path/to/xSearch
 ```
 
-### 基础使用
+## Agent Invocation (OHO Synergy)
+
+In Hermes, OpenCode, or OpenClaw, simply invoke the skill with your extraction intent:
 
 ```typescript
-import { XSearch } from '@xsearch/core';
-
-const search = new XSearch();
-
-// 简单查询（零 Token）
-const result = await search.query("Python 3.12 新特性");
-console.log(result.content);
+task(
+  skill='xsearch', 
+  prompt='Extract all financial skills via API hijacker, bypass pagination limits'
+)
 ```
 
-### 高级使用
+## Manual Usage (Node.js)
 
 ```typescript
-// 批量搜索
-const results = await search.batch(
-  ["React 19", "Vue 3.4", "Svelte 5"],
-  { batchSize: 3, parallel: 2 }
-);
+import { SearchEngine } from '@xsearch/core';
 
-// 深度研究
-const research = await search.research("AI Agent 发展趋势", "deep");
+const engine = new SearchEngine({
+  providers: {
+    apiHijacker: {
+      baseUrl: 'https://api.target.com/v1/search',
+      authToken: process.env.API_KEY, // Optional Bearer
+      paginationPath: 'data.pagination',
+      resultsPath: 'data.items',
+      hasNextField: 'hasNext'
+    }
+  }
+});
 
-// 对比分析
-const comparison = await search.compare(
-  ["React", "Vue", "Svelte"],
-  ["性能", "生态", "学习曲线"]
-);
+const result = await engine.search({
+  query: 'financial data',
+  provider: 'apiHijacker' // Forces the 0-token high-speed pipeline
+});
+
+console.log(`Extracted ${result.content.length} deep-web items flawlessly.`);
 ```
 
-### OpenClaw 集成
-
-```typescript
-import { xsearchSkill } from '@xsearch/core/skills';
-
-// 在 OpenClaw 中使用
-task(skill='xsearch', prompt='搜索最新的前端框架趋势')
-```
-
-## 架构设计
-
-详见 [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
+## Architecture: OHO Paradigm & FinTec Agent Laws Compliant
+This repository is strictly governed by the `labs-teamwork-spec` ruleset. All significant changes are prefaced by `vX.openspec.yaml` contracts and `ADR` documentation.
+See `docs/ADR/002_v6_api_hijacker_shift.md` for the core design decisions.
 
 ## License
-
 MIT
