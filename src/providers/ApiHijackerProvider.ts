@@ -51,7 +51,7 @@ export interface PaginatedApiResult {
  * - Supports Bearer token authentication
  * - Configurable pagination parameters and response parsing
  * 
- * @see ADR-002: V6 API/MCP Protocol Hijacker Shift
+ * Direct API provider with pagination and rate limit handling
  */
 export class ApiHijackerProvider {
   private client: AxiosInstance;
