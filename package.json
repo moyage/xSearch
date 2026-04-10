@@ -5,11 +5,8 @@
   "main": "dist/skills/xsearchSkill.js",
   "types": "dist/skills/xsearchSkill.d.ts",
   "scripts": {
-    "build": "tsc",
-    "prepare": "npm run build",
-    "test": "jest",
-    "lint": "eslint src/",
-    "build:mcp": "node build-mcp.js",
+    "build": "esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js",
+    "build:mcp": "esbuild src/mcp-server.ts --bundle --platform=node --outfile=dist/mcp.js",
     "start:mcp": "node dist/mcp.js"
   },
   "keywords": [
@@ -39,7 +36,6 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^20.8.0",
     "esbuild": "^0.28.0",
-    "fintec-agent-laws": "file:../labs-teamwork-spec",
     "jest": "^30.3.0",
     "ts-jest": "^29.4.9",
     "typescript": "^5.2.2"
