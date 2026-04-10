@@ -1,64 +1,50 @@
-# XSearch V6 (Protocol Hijacker)
+# xSearch V6 (Autonomous Extraction Engine)
 
-**XSearch V6** has been completely reimagined from a "Headless Browser Scraper" to a **"Native API/MCP Protocol Hijacker"**. 
+[![Model Context Protocol](https://img.shields.io/badge/MCP-Native-green.svg)](#)
+[![V8 Autonomous Orchestrator](https://img.shields.io/badge/V8-Orchestrator-blue.svg)](#)
 
-Designed natively for OpenClaw, NanoClaw, Hermes, and any MCP-compatible autonomous agents, xSearch bypasses Cloudflare walls, ignores deceptive pagination caps, and extracts structured data at microsecond latency with **zero-token cognitive overhead**.
+[中文文档 (Chinese)](README_zh.md)
 
-## Why V6? (The Paradigm Shift)
-*   **WAF Bypass**: No more dealing with `cf-mitigated: challenge` blocks by Playwright. xSearch connects via native HTTP/RPC and MCP (`@modelcontextprotocol/sdk`).
-*   **Infinite Pagination Liar-Filter**: Many APIs lie about their `total` count to stop scrapers. XSearch probes until it receives an empty array, bypassing fake limits (e.g. turning 50 results into 1,800+).
-*   **Rate-Limit Backpressure**: Built-in exponential backoff for `HTTP 429 Too Many Requests`. Never crash on a rate limit again.
-*   **Extreme Complexity Budget**: Stripped of heavy browser kernels. Deploy instantly on Edge workers or Serverless.
+**xSearch V6** is a next-generation API/MCP Hijacker and Autonomous Data Extraction Engine. Designed from first principles for modern AI Agents, it bypasses WAF walls (Cloudflare `cf-mitigated`), ignores deceptive pagination caps, and extracts structured data at microsecond latency with zero-token cognitive overhead.
 
-## One-Click Installation
+## 🎯 The Problem It Solves
+Traditional headless browser wrappers (e.g., Playwright) deployed for agents suffer from three fatal flaws:
+1. **WAF Blocks**: Browser automation easily triggers Captchas and `cf-mitigated` challenges.
+2. **Pagination Lies**: Modern APIs cap standard queries at 50 or 100 results to prevent scraping.
+3. **Context Explosion**: Feeding raw HTML or massive DOM trees to LLMs consumes excessive tokens and degrades reasoning accuracy.
 
-xSearch is packaged as a standard Skill for OpenClaw/NanoClaw. You can install it directly from the marketplace or git:
+xSearch V6 solves this by completely dropping the heavy browser layer in favor of native HTTP/RPC hijacking, backed by a localized autonomous engine.
 
+## 🏗 Architecture
+- **Protocol Hijacker**: Deep API inspection. Intercepts backend requests and bypasses rate limits with built-in exponential backoff (HTTP 429).
+- **Infinite Pagination Prober**: Probes endpoints sequentially until empty arrays are returned, effectively turning artificial 50-result limits into 1,800+ extractions.
+- **V8 Autonomous Orchestrator**: An internal multi-stage pipeline acting as a sub-agent.
+  - **Query Distillation**: Refines broad intents into targeted keywords.
+  - **Target Reconnaissance**: Autonomously identifies the optimal API endpoint.
+  - **DOM Dehydrator**: Strips out noise when falling back to browser mode.
+  - **Semantic Reranker**: Performs local token-free sorting to ensure only high-signal data is returned to the main agent.
+- **Protocol**: Single-file bundled standard MCP Server (`@modelcontextprotocol/server`).
+
+## 🚀 Features
+1. **MCP Native**: Plugs instantly into Cursor, Claude Desktop, OpenClaw, or Hermes via the `dist/mcp.js` zero-dependency bundle.
+2. **`xsearch_hijack_api`**: Direct tool for agents to command pagination bypasses and bulk structured extractions.
+3. **`xsearch_autonomous_probe`**: Agent provides a broad intent, and the V8 Orchestrator handles the complete research pipeline autonomously.
+4. **Token Budget Manager**: Hard-stops operations if extractions threaten to overflow the agent's context window.
+
+## 💻 Use Cases
+- **Deep Financial Research**: Extracting historical market trends from heavily guarded trading platforms without hitting 403 blocks.
+- **Competitor Analysis**: Probing hidden pagination APIs to scrape full product catalogs in milliseconds.
+- **Agent Knowledge Augmentation**: When standard tools like Tavily fail due to deep structure or captchas, xSearch hijacks the internal API directly to retrieve the raw JSON.
+
+## 🛠 Usage (For AI & Humans)
+
+### Installation
 ```bash
-openclaw skill install github:moyage/xSearch
-# OR locally
-openclaw skill install /path/to/xSearch
+npm install -g xsearch
+# Start the MCP Server
+npm run mcp
 ```
 
-## Agent Invocation (OHO Synergy)
-
-In Hermes, OpenCode, or OpenClaw, simply invoke the skill with your extraction intent:
-
-```typescript
-task(
-  skill='xsearch', 
-  prompt='Extract all financial skills via API hijacker, bypass pagination limits'
-)
-```
-
-## Manual Usage (Node.js)
-
-```typescript
-import { SearchEngine } from '@xsearch/core';
-
-const engine = new SearchEngine({
-  providers: {
-    apiHijacker: {
-      baseUrl: 'https://api.target.com/v1/search',
-      authToken: process.env.API_KEY, // Optional Bearer
-      paginationPath: 'data.pagination',
-      resultsPath: 'data.items',
-      hasNextField: 'hasNext'
-    }
-  }
-});
-
-const result = await engine.search({
-  query: 'financial data',
-  provider: 'apiHijacker' // Forces the 0-token high-speed pipeline
-});
-
-console.log(`Extracted ${result.content.length} deep-web items flawlessly.`);
-```
-
-## Architecture: OHO Paradigm & FinTec Agent Laws Compliant
-This repository is strictly governed by the `labs-teamwork-spec` ruleset. All significant changes are prefaced by `vX.openspec.yaml` contracts and `ADR` documentation.
-See `docs/ADR/002_v6_api_hijacker_shift.md` for the core design decisions.
-
-## License
-MIT
+### AI Integration (MCP Tools)
+- Call `xsearch_hijack_api` with `baseUrl`, `query`, and pagination parameters.
+- Call `xsearch_autonomous_probe` for hands-off intent resolution.
