@@ -1,7 +1,7 @@
 {
   "name": "xsearch",
-  "version": "6.0.0",
-  "description": "XSearch V6 (Protocol Hijacker) - Next-generation API/MCP hijacking search engine for AI Agents.",
+  "version": "1.0.0",
+  "description": "xSearch - A standard skill library for enhancing agent systems with advanced search capabilities.",
   "main": "dist/skills/xsearchSkill.js",
   "types": "dist/skills/xsearchSkill.d.ts",
   "scripts": {
@@ -49,8 +49,8 @@
   },
   "openclaw": {
     "skillName": "xsearch",
-    "displayName": "XSearch V6 API Hijacker",
-    "description": "Zero-DOM-dependency, high-speed API and MCP protocol hijacking search engine. Designed to bypass Cloudflare and paginate infinitely via native APIs.",
+    "displayName": "xSearch",
+    "description": "A standard skill library for enhancing agent systems with advanced search capabilities.",
     "category": "data-collection",
     "entryPoint": "dist/skills/xsearchSkill.js",
     "permissions": [
@@ -60,11 +60,11 @@
     "config": {
       "defaultProvider": {
         "type": "string",
-        "description": "Default search provider (apiHijacker or tavily)",
-        "default": "apiHijacker",
+        "description": "Default search provider (tavily, apiHijacker, or browser)",
+        "default": "tavily",
         "options": [
-          "apiHijacker",
           "tavily",
+          "apiHijacker",
           "browser"
         ]
       },
@@ -75,7 +75,7 @@
       },
       "apiHijacker": {
         "type": "object",
-        "description": "Configuration for the Protocol Hijacker mode (Base URL, Pagination Rules)",
+        "description": "Configuration for API Hijacker mode",
         "required": false
       }
     },
@@ -84,15 +84,15 @@
       "args": [
         "dist/mcp.js"
       ],
-      "description": "XSearch MCP Server - API hijacking and autonomous search capabilities",
+      "description": "xSearch MCP Server - Advanced search capabilities for AI agents",
       "tools": [
         {
-          "name": "xsearch_hijack_api",
-          "description": "API hijacking with pagination lie detection and rate limit handling"
+          "name": "xsearch_search",
+          "description": "Standard search with configurable provider and options"
         },
         {
-          "name": "xsearch_autonomous_probe",
-          "description": "Autonomous intelligent search with query distillation and semantic reranking"
+          "name": "xsearch_batch_search",
+          "description": "Execute multiple search queries in parallel"
         }
       ]
     },
