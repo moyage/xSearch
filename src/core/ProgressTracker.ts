@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import { TerminalOutputManager } from './TerminalOutputManager';
 
 export interface Progress {
   taskName: string;
@@ -8,6 +9,7 @@ export interface Progress {
   currentStage?: string;
   eta?: number;
   error?: Error;
+  [key: string]: any;
 }
 
 export interface StageProgress {
@@ -15,12 +17,21 @@ export interface StageProgress {
   status: 'pending' | 'running' | 'completed' | 'error';
   progress: number;
   details?: string;
+  [key: string]: any;
 }
 
 export class ProgressTracker extends EventEmitter {
-  private progress: Progress;
+  private progress!: Progress;
+  private terminal: TerminalOutputManager;
+  private streaming: boolean;
 
-  start(config: { taskName: string; stages: string[] }): void {
+  constructor(options?: { streaming?: boolean }) {
+    super();
+    this.terminal = new TerminalOutputManager(options?.streaming ?? false);
+    this.streaming = options?.streaming ?? false;
+  }
+
+  start(config: { taskName: string; stages: string[]; totalTasks?: number }): void {
     this.progress = {
       taskName: config.taskName,
       status: 'running',
@@ -31,6 +42,11 @@ export class ProgressTracker extends EventEmitter {
         progress: 0,
       })),
     };
+
+    if (this.streaming) {
+      this.renderStreaming();
+    }
+    
     this.emit('update', this.progress);
   }
 
@@ -39,6 +55,11 @@ export class ProgressTracker extends EventEmitter {
     if (stage) {
       Object.assign(stage, update);
       this.calculateOverallProgress();
+      
+      if (this.streaming) {
+        this.renderStreaming();
+      }
+      
       this.emit('update', this.progress);
     }
   }
@@ -46,17 +67,80 @@ export class ProgressTracker extends EventEmitter {
   finish(): void {
     this.progress.status = 'completed';
     this.progress.percentage = 100;
+    
+    for (const stage of this.progress.stages) {
+      stage.status = 'completed';
+      stage.progress = 100;
+    }
+    
+    if (this.streaming) {
+      this.terminal.writeLine('');
+      this.terminal.writeLine(`✓ ${this.progress.taskName} completed`, { color: 'green', bold: true });
+    }
+    
     this.emit('update', this.progress);
   }
 
   fail(error: Error): void {
     this.progress.status = 'error';
     this.progress.error = error;
+    
+    if (this.streaming) {
+      this.terminal.writeLine('');
+      this.terminal.writeLine(`✗ ${this.progress.taskName} failed: ${error.message}`, { color: 'red', bold: true });
+    }
+    
     this.emit('update', this.progress);
   }
 
   getProgress(): Progress {
     return { ...this.progress };
+  }
+
+  enableStreaming(): void {
+    this.streaming = true;
+    this.terminal.enable();
+  }
+
+  disableStreaming(): void {
+    this.streaming = false;
+    this.terminal.disable();
+  }
+
+  private renderStreaming(): void {
+    const lines: string[] = [];
+    
+    lines.push(`\x1b[2K\r🔍 ${this.progress.taskName}`);
+    
+    const statusIcon = (status: string) => {
+      switch (status) {
+        case 'completed': return '✓';
+        case 'running': return '→';
+        case 'error': return '✗';
+        default: return '○';
+      }
+    };
+    
+    const statusColor = (status: string) => {
+      switch (status) {
+        case 'completed': return 'green';
+        case 'running': return 'cyan';
+        case 'error': return 'red';
+        default: return 'gray';
+      }
+    };
+    
+    for (const stage of this.progress.stages) {
+      const icon = statusIcon(stage.status);
+      const color = statusColor(stage.status);
+      const details = stage.details ? ` (${stage.details})` : '';
+      lines.push(`   ${icon} ${stage.name}: ${stage.progress}%${details}`);
+    }
+    
+    const overallLine = `   Overall: ${this.progress.percentage.toFixed(1)}%`;
+    
+    this.terminal.write('\x1b[2K\r');
+    this.terminal.write(lines.join('\n') + '\n');
   }
 
   private calculateOverallProgress(): void {

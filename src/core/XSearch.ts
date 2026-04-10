@@ -3,26 +3,27 @@
  * 主入口文件
  */
 
-import { SearchEngine, SearchQuery, SearchResult, SearchOptions } from './core/SearchEngine';
-import { TokenManager, TokenBudget } from './core/TokenManager';
-import { ProgressTracker, Progress } from './core/ProgressTracker';
-import { VisualizationEngine } from './visualization/VisualizationEngine';
+import { SearchEngine, SearchQuery, SearchResult, SearchOptions } from './SearchEngine';
+import { TokenManager, TokenBudget } from './TokenManager';
+import { ProgressTracker, Progress } from './ProgressTracker';
+import { VisualizationEngine } from '../visualization/VisualizationEngine';
 import { EventEmitter } from 'events';
+import { V8AutonomousSearchOrchestrator } from '../v8/V8AutonomousSearchOrchestrator';
 
 export interface XSearchConfig {
-  /** Token 预算配置 */
   tokenBudget?: Partial<TokenBudget>;
-  /** 搜索提供商配置 */
   providers?: {
     tavily?: { apiKey?: string };
-    browser?: { engine?: 'playwright' | 'puppeteer'; headless?: boolean };
+    browser?: { 
+      endpoint?: string;
+      useMcp?: boolean;
+      enableSmartScroll?: boolean;
+    };
   };
-  /** 反爬虫配置 */
   antiCrawler?: {
     userAgentRotation?: boolean;
     proxyList?: string[];
   };
-  /** 输出配置 */
   output?: {
     stream?: boolean;
     showProgress?: boolean;
@@ -45,6 +46,8 @@ export interface QueryOptions {
   onProgress?: (progress: Progress) => void;
   /** 流式输出回调 */
   onStream?: (chunk: string) => void;
+  /** V3 旁路落盘支持 */
+  outputPath?: string;
 }
 
 export interface BatchOptions extends QueryOptions {
@@ -75,7 +78,7 @@ export class XSearch extends EventEmitter {
       },
       providers: {
         tavily: {},
-        browser: { engine: 'playwright', headless: true },
+        browser: { useMcp: true, enableSmartScroll: true },
         ...config.providers,
       },
       antiCrawler: {
@@ -119,21 +122,15 @@ export class XSearch extends EventEmitter {
     });
   }
 
-  /**
-   * 执行简单查询
-   * 自动选择最优策略，简单场景零 Token
-   */
   async query(query: string, options: QueryOptions = {}): Promise<SearchResult> {
     const startTime = Date.now();
     
-    // 初始化进度追踪
     this.progressTracker.start({
       taskName: query,
-      stages: ['search', 'extract', 'analyze', 'visualize'],
+      stages: ['search', 'extract', 'visualize'],
     });
 
     try {
-      // 分析查询，选择策略
       const strategy = this.determineStrategy(query, options);
       
       this.progressTracker.updateStage('search', { 
@@ -141,7 +138,6 @@ export class XSearch extends EventEmitter {
         provider: strategy.provider 
       });
 
-      // 执行搜索
       const searchQuery: SearchQuery = {
         query,
         complexity: options.complexity || 'medium',
@@ -149,57 +145,55 @@ export class XSearch extends EventEmitter {
         provider: strategy.provider,
       };
 
-      const result = await this.searchEngine.search(searchQuery, {
-        onProgress: (progress) => {
-          this.progressTracker.updateStage('search', { progress });
-          options.onProgress?.(this.progressTracker.getProgress());
-        },
-      });
+      let result;
+      
+      if (strategy.provider === 'browser' && options.complexity === 'high') {
+         console.log("[V8 Router] Engaging Autonomous Infiltration Protocol...");
+         const orchestrator = new V8AutonomousSearchOrchestrator();
+         
+         const siteMatch = query.match(/site:([^\s]+)/i);
+         const targetSite = siteMatch ? siteMatch[1] : '';
+         const fallbackUrl = targetSite ? `https://${targetSite}` : '';
+
+         const v8Result = await orchestrator.search(fallbackUrl, query);
+         
+         result = {
+            query,
+            content: v8Result.results.map((r: any) => `Title: ${r.title}\nURL: ${r.url}\nMatch Score: ${r.matchScore}\nSnippet: ${r.snippet}`).join('\n\n'),
+            sources: v8Result.results.map((r: any) => ({ title: r.title, url: r.url, snippet: r.snippet })),
+            metadata: { duration: v8Result.metrics ? (v8Result.metrics.distillationTime + v8Result.metrics.reconnaissanceTime + v8Result.metrics.domInteractionTime + v8Result.metrics.rerankTime) : 0, strategy: 'v8-autonomous', tokensUsed: {used: 0, cost: 0} },
+            visualization: undefined
+         };
+      } else {
+         result = await this.searchEngine.search(searchQuery, {
+           outputPath: options.outputPath,
+           onProgress: (progress) => {
+             this.progressTracker.updateStage('search', { progress });
+             options.onProgress?.(this.progressTracker.getProgress());
+           },
+         });
+      }
 
       this.progressTracker.updateStage('search', { status: 'completed' });
 
-      // 如果需要且预算允许，使用 LLM 增强
-      if (strategy.useLLM && this.tokenManager.canUseTokens(1000)) {
-        this.progressTracker.updateStage('analyze', { status: 'running' });
+      if (this.config.output.visualization && options.outputFormat) {
+        this.progressTracker.updateStage('visualize', { status: 'running' });
         
-        const enhancedResult = await this.enhanceWithLLM(result, {
-          maxTokens: options.maxTokens,
-          onStream: options.onStream,
-        });
+        result.visualization = await this.visualizationEngine.render(
+          result,
+          options.outputFormat
+        );
 
-        this.progressTracker.updateStage('analyze', { status: 'completed' });
-        
-        // 生成可视化
-        if (this.config.output.visualization && options.outputFormat) {
-          this.progressTracker.updateStage('visualize', { status: 'running' });
-          
-          enhancedResult.visualization = await this.visualizationEngine.render(
-            enhancedResult,
-            options.outputFormat
-          );
-
-          this.progressTracker.updateStage('visualize', { status: 'completed' });
-        }
-
-        this.progressTracker.finish();
-        
-        return {
-          ...enhancedResult,
-          metadata: {
-            duration: Date.now() - startTime,
-            tokensUsed: this.tokenManager.getUsage(),
-            strategy: strategy.name,
-          },
-        };
+        this.progressTracker.updateStage('visualize', { status: 'completed' });
       }
 
       this.progressTracker.finish();
-
+      
       return {
         ...result,
         metadata: {
           duration: Date.now() - startTime,
-          tokensUsed: { used: 0, cost: 0 },
+          tokensUsed: this.tokenManager.getUsage(),
           strategy: strategy.name,
         },
       };
@@ -244,7 +238,7 @@ export class XSearch extends EventEmitter {
         batch.map((query) =>
           this.query(query, {
             ...options,
-            onProgress: undefined, // 批量模式下不转发单个进度
+            onProgress: undefined,
           })
         )
       );
@@ -261,84 +255,6 @@ export class XSearch extends EventEmitter {
     this.progressTracker.finish();
 
     return results;
-  }
-
-  /**
-   * 深度研究
-   * 多轮搜索、交叉验证、综合分析
-   */
-  async research(topic: string, depth: 'shallow' | 'medium' | 'deep' = 'medium'): Promise<SearchResult> {
-    const iterations = depth === 'shallow' ? 2 : depth === 'medium' ? 3 : 5;
-    
-    this.progressTracker.start({
-      taskName: `深度研究: ${topic}`,
-      stages: ['initial_search', 'expansion', 'synthesis'],
-    });
-
-    // 初始搜索
-    this.progressTracker.updateStage('initial_search', { status: 'running' });
-    const initialResult = await this.query(topic, { useLLM: true });
-    this.progressTracker.updateStage('initial_search', { status: 'completed' });
-
-    // 扩展搜索（基于初始结果提取关键词）
-    this.progressTracker.updateStage('expansion', { status: 'running' });
-    const subQueries = this.extractSubQueries(initialResult, iterations);
-    const expandedResults = await this.batch(subQueries, { 
-      useLLM: false, // 扩展搜索不使用 LLM
-      batchSize: 5,
-    });
-    this.progressTracker.updateStage('expansion', { status: 'completed' });
-
-    // 综合所有结果
-    this.progressTracker.updateStage('synthesis', { status: 'running' });
-    const synthesizedResult = await this.synthesizeResults(
-      [initialResult, ...expandedResults],
-      topic
-    );
-    this.progressTracker.updateStage('synthesis', { status: 'completed' });
-
-    this.progressTracker.finish();
-
-    return synthesizedResult;
-  }
-
-  /**
-   * 对比分析
-   * 多维度对比多个主题
-   */
-  async compare(items: string[], criteria: string[]): Promise<SearchResult> {
-    this.progressTracker.start({
-      taskName: `对比分析: ${items.join(' vs ')}`,
-      stages: ['collect', 'extract', 'compare'],
-    });
-
-    // 收集每个 item 的信息
-    this.progressTracker.updateStage('collect', { status: 'running' });
-    const itemResults = await this.batch(
-      items.map((item) => `${item} 详细介绍`),
-      { useLLM: false }
-    );
-    this.progressTracker.updateStage('collect', { status: 'completed' });
-
-    // 提取对比维度
-    this.progressTracker.updateStage('extract', { status: 'running' });
-    const extractedData = await Promise.all(
-      itemResults.map((result) => this.extractComparisonData(result, criteria))
-    );
-    this.progressTracker.updateStage('extract', { status: 'completed' });
-
-    // 生成对比表
-    this.progressTracker.updateStage('compare', { status: 'running' });
-    const comparisonResult = await this.generateComparison(
-      items,
-      criteria,
-      extractedData
-    );
-    this.progressTracker.updateStage('compare', { status: 'completed' });
-
-    this.progressTracker.finish();
-
-    return comparisonResult;
   }
 
   /**
@@ -381,111 +297,29 @@ export class XSearch extends EventEmitter {
       };
     }
 
-    // 中等复杂度：浏览器提取 + 可选 LLM
+    // 中等复杂度：浏览器提取
     if (options.complexity === 'medium') {
       return {
         name: 'standard',
         provider: 'browser',
-        useLLM: options.useLLM ?? false,
+        useLLM: false,
       };
     }
 
-    // 高复杂度：全功能 + LLM 增强
+    // 高复杂度：全功能 extraction
     return {
       name: 'advanced',
       provider: 'hybrid',
-      useLLM: true,
-    };
-  }
-
-  /**
-   * 使用 LLM 增强结果
-   */
-  private async enhanceWithLLM(
-    result: SearchResult,
-    options: { maxTokens?: number; onStream?: (chunk: string) => void }
-  ): Promise<SearchResult> {
-    // 预留：集成 LLM 调用
-    // 实际实现需要接入具体的 LLM provider
-    
-    const budget = options.maxTokens || 2000;
-    
-    if (!this.tokenManager.canUseTokens(budget)) {
-      return {
-        ...result,
-        note: 'Token 预算不足，跳过 LLM 增强',
-      };
-    }
-
-    // 模拟 LLM 增强（实际应调用 LLM API）
-    this.tokenManager.consume(budget, 'gpt-4');
-
-    return {
-      ...result,
-      enhanced: true,
-      summary: 'LLM 生成的摘要（预留）',
-    };
-  }
-
-  /**
-   * 从结果中提取子查询
-   */
-  private extractSubQueries(result: SearchResult, count: number): string[] {
-    // 预留：从初始结果中提取关键词和子主题
-    return Array(count).fill(null).map((_, i) => `${result.query} 子主题 ${i + 1}`);
-  }
-
-  /**
-   * 综合多个结果
-   */
-  private async synthesizeResults(results: SearchResult[], topic: string): Promise<SearchResult> {
-    // 预留：使用 LLM 综合多个搜索结果
-    return {
-      query: topic,
-      content: results.map((r) => r.content).join('\n\n'),
-      sources: results.flatMap((r) => r.sources || []),
-      synthesized: true,
-    };
-  }
-
-  /**
-   * 提取对比数据
-   */
-  private async extractComparisonData(result: SearchResult, criteria: string[]): Promise<any> {
-    // 预留：提取结构化的对比数据
-    return {
-      result,
-      criteria,
-    };
-  }
-
-  /**
-   * 生成对比结果
-   */
-  private async generateComparison(
-    items: string[],
-    criteria: string[],
-    data: any[]
-  ): Promise<SearchResult> {
-    // 预留：生成对比表格和可视化
-    return {
-      query: `对比: ${items.join(', ')}`,
-      items,
-      criteria,
-      data,
-      visualization: {
-        type: 'comparison_table',
-        data,
-      },
+      useLLM: false,
     };
   }
 }
 
 // 导出类型
-export * from './core/SearchEngine';
-export * from './core/TokenManager';
-export * from './core/ProgressTracker';
-export * from './visualization/VisualizationEngine';
+export * from './SearchEngine';
+export * from './TokenManager';
+export * from './ProgressTracker';
+export * from '../visualization/VisualizationEngine';
 
 // 默认导出
 export default XSearch;

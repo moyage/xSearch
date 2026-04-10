@@ -1,711 +1,1213 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XSearch - 智能搜索增强技能 | OpenClaw Skill</title>
+    <meta name="description" content="Powerful external information search and collection capabilities for OpenClaw">
+    <title>XSearch - AI-Powered Search Enhancement</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        * {
+        /* ===== CSS Variables ===== */
+        :root {
+            /* Cyberpunk Colors */
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff2a6d;
+            --neon-yellow: #fcee0a;
+            --neon-green: #05ffa1;
+            --neon-purple: #bd00ff;
+            
+            /* Background */
+            --bg-void: #0a0a0f;
+            --bg-surface: #12121a;
+            --bg-elevated: #1a1a25;
+            --bg-card: #151520;
+            
+            /* Text */
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #606070;
+            
+            /* Gradients */
+            --gradient-cyber: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
+            --gradient-dark: linear-gradient(180deg, var(--bg-void) 0%, #0f0f1a 100%);
+            
+            /* Effects */
+            --glow-cyan: 0 0 10px rgba(0, 240, 255, 0.5), 0 0 20px rgba(0, 240, 255, 0.3);
+            --glow-pink: 0 0 10px rgba(255, 42, 109, 0.5), 0 0 20px rgba(255, 42, 109, 0.3);
+            
+            /* Fonts */
+            --font-display: 'Orbitron', sans-serif;
+            --font-body: 'Rajdhani', sans-serif;
+            
+            /* Spacing */
+            --section-padding: 120px;
+            --container-max: 1200px;
+        }
+
+        /* ===== Reset & Base ===== */
+        *, *::before, *::after {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-body);
+            background: var(--bg-void);
+            color: var(--text-primary);
             line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow-x: hidden;
             min-height: 100vh;
         }
 
+        /* ===== Background Effects ===== */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.08) 0%, transparent 70%);
+            top: -200px;
+            right: -200px;
+            pointer-events: none;
+            z-index: 0;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-glow-2 {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 42, 109, 0.06) 0%, transparent 70%);
+            bottom: -150px;
+            left: -150px;
+            pointer-events: none;
+            z-index: 0;
+            animation: float 25s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        /* ===== Layout ===== */
         .container {
-            max-width: 1200px;
+            max-width: var(--container-max);
             margin: 0 auto;
-            padding: 20px;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
         }
 
-        /* Header */
-        .header {
-            text-align: center;
-            padding: 60px 20px;
-            color: white;
+        /* ===== Navigation ===== */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 20px 0;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 240, 255, 0.1);
         }
 
-        .header h1 {
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .header .tagline {
-            font-size: 1.5rem;
-            opacity: 0.9;
-            margin-bottom: 30px;
-        }
-
-        .header .stats {
+        .nav-inner {
             display: flex;
-            justify-content: center;
-            gap: 40px;
-            margin-top: 40px;
-            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            max-width: var(--container-max);
+            margin: 0 auto;
+            padding: 0 24px;
         }
 
-        .stat-item {
-            text-align: center;
+        .nav-logo {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--gradient-cyber);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+            letter-spacing: 2px;
         }
 
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            display: block;
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
         }
 
-        .stat-label {
-            font-size: 0.9rem;
-            opacity: 0.8;
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
         }
 
-        /* Install Section */
-        .install-section {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            margin: 40px 0;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        .nav-link:hover {
+            color: var(--neon-cyan);
+            text-shadow: var(--glow-cyan);
         }
 
-        .install-title {
-            text-align: center;
-            font-size: 2rem;
-            margin-bottom: 30px;
-            color: #667eea;
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--neon-cyan);
+            transition: width 0.3s ease;
+            box-shadow: var(--glow-cyan);
         }
 
-        .install-methods {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-bottom: 30px;
+        .nav-link:hover::after {
+            width: 100%;
         }
 
-        .install-card {
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 25px;
+        /* Language Switcher */
+        .lang-switcher {
+            position: relative;
+        }
+
+        .lang-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 8px;
+            color: var(--neon-cyan);
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            cursor: pointer;
             transition: all 0.3s ease;
         }
 
-        .install-card:hover {
-            border-color: #667eea;
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+        .lang-btn:hover {
+            background: rgba(0, 240, 255, 0.2);
+            box-shadow: var(--glow-cyan);
         }
 
-        .install-card h3 {
-            color: #667eea;
-            margin-bottom: 15px;
-            font-size: 1.3rem;
-        }
-
-        .install-card .method-tag {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            margin-bottom: 15px;
-        }
-
-        .code-block {
-            background: #f5f5f5;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
-            position: relative;
-            overflow-x: auto;
-        }
-
-        .code-block pre {
-            margin: 0;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            color: #333;
-        }
-
-        .copy-btn {
+        .lang-dropdown {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #667eea;
-            color: white;
+            top: calc(100% + 8px);
+            right: 0;
+            min-width: 160px;
+            background: var(--bg-elevated);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            border-radius: 12px;
+            padding: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1001;
+        }
+
+        .lang-switcher.active .lang-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .lang-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 10px 12px;
+            background: transparent;
             border: none;
-            padding: 5px 15px;
-            border-radius: 5px;
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-family: var(--font-body);
+            font-size: 0.95rem;
             cursor: pointer;
-            font-size: 0.8rem;
-            transition: background 0.3s;
+            transition: all 0.2s ease;
+            text-align: left;
         }
 
-        .copy-btn:hover {
-            background: #5568d3;
+        .lang-option:hover {
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--neon-cyan);
         }
 
-        /* Features */
-        .features-section {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            margin: 40px 0;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        .lang-option.active {
+            background: rgba(0, 240, 255, 0.15);
+            color: var(--neon-cyan);
+        }
+
+        /* ===== Hero Section ===== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 0;
+            position: relative;
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 800px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 50px;
+            color: var(--neon-cyan);
+            font-size: 0.9rem;
+            margin-bottom: 32px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 5px rgba(0, 240, 255, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(0, 240, 255, 0.6); }
+        }
+
+        .hero-title {
+            font-family: var(--font-display);
+            font-size: clamp(3rem, 8vw, 5rem);
+            font-weight: 900;
+            margin-bottom: 16px;
+            letter-spacing: 4px;
+            background: var(--gradient-cyber);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 40px rgba(0, 240, 255, 0.3);
+        }
+
+        .hero-subtitle {
+            font-family: var(--font-display);
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+        }
+
+        .hero-desc {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            line-height: 1.8;
+        }
+
+        .hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 40px;
+            background: transparent;
+            border: 2px solid var(--neon-cyan);
+            border-radius: 4px;
+            color: var(--neon-cyan);
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-cta::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .hero-cta:hover::before {
+            left: 100%;
+        }
+
+        .hero-cta:hover {
+            background: rgba(0, 240, 255, 0.1);
+            box-shadow: var(--glow-cyan);
+            transform: translateY(-2px);
+        }
+
+        /* ===== Section Common ===== */
+        .section {
+            padding: var(--section-padding) 0;
+            position: relative;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .section-label {
+            display: inline-block;
+            padding: 6px 16px;
+            background: rgba(255, 42, 109, 0.1);
+            border: 1px solid rgba(255, 42, 109, 0.3);
+            border-radius: 4px;
+            color: var(--neon-pink);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
         }
 
         .section-title {
-            text-align: center;
-            font-size: 2rem;
-            margin-bottom: 40px;
-            color: #333;
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: 2px;
+        }
+
+        .section-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+        }
+
+        /* ===== Features Section ===== */
+        .features {
+            background: var(--bg-surface);
         }
 
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
+            gap: 24px;
         }
 
-        .feature-item {
-            padding: 25px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            transition: transform 0.3s;
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 240, 255, 0.1);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
         }
 
-        .feature-item:hover {
-            transform: translateY(-5px);
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient-cyber);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(0, 240, 255, 0.3);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
         }
 
         .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            border-radius: 12px;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            background: rgba(0, 240, 255, 0.15);
+            box-shadow: var(--glow-cyan);
+            transform: scale(1.1);
         }
 
         .feature-title {
-            font-size: 1.2rem;
-            color: #667eea;
-            margin-bottom: 10px;
-            font-weight: bold;
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
         }
 
         .feature-desc {
-            color: #666;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
+        /* ===== Install Section ===== */
+        .install-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 32px;
+        }
+
+        .install-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 240, 255, 0.1);
+            border-radius: 16px;
+            padding: 32px;
+        }
+
+        .install-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .install-card-tag {
+            padding: 4px 12px;
+            background: rgba(5, 255, 161, 0.1);
+            border: 1px solid rgba(5, 255, 161, 0.3);
+            border-radius: 4px;
+            color: var(--neon-green);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .install-card-title {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .install-card-desc {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
             font-size: 0.95rem;
         }
 
-        /* Use Cases */
-        .usecases-section {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            margin: 40px 0;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-
-        .usecase-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .usecase-item {
-            display: flex;
-            align-items: start;
-            gap: 15px;
+        .code-block {
+            background: #0d0d12;
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            border-radius: 12px;
             padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border-left: 4px solid #667eea;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .code-block::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+            opacity: 0.5;
+        }
+
+        .code-content {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .code-content .comment {
+            color: var(--text-muted);
+        }
+
+        .code-content .command {
+            color: var(--neon-cyan);
+        }
+
+        .code-content .string {
+            color: var(--neon-green);
+        }
+
+        .code-copy {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 6px 12px;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            border-radius: 6px;
+            color: var(--neon-cyan);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .code-copy:hover {
+            background: rgba(0, 240, 255, 0.2);
+        }
+
+        /* ===== Examples Section ===== */
+        .examples {
+            background: var(--bg-surface);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+        }
+
+        .example-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(189, 0, 255, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .example-card:hover {
+            border-color: rgba(189, 0, 255, 0.3);
+            box-shadow: 0 10px 30px rgba(189, 0, 255, 0.1);
+        }
+
+        .example-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .example-title {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .example-desc {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .example-code {
+            padding: 20px 24px;
+            background: #0d0d12;
+        }
+
+        /* ===== Use Cases Section ===== */
+        .usecases {
+            background: var(--bg-surface);
+        }
+
+        .usecases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+        }
+
+        .usecase-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 240, 255, 0.1);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .usecase-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-cyber);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .usecase-card:hover {
+            border-color: rgba(0, 240, 255, 0.3);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .usecase-card:hover::before {
+            opacity: 1;
         }
 
         .usecase-icon {
-            font-size: 1.5rem;
-            flex-shrink: 0;
-        }
-
-        .usecase-content h4 {
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .usecase-content p {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        /* One Click Install */
-        .oneclick-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px;
-            padding: 60px 40px;
-            margin: 40px 0;
-            text-align: center;
-            color: white;
-        }
-
-        .oneclick-title {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-        }
-
-        .oneclick-desc {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            margin-bottom: 30px;
-        }
-
-        .install-btn {
-            display: inline-block;
-            background: white;
-            color: #667eea;
-            padding: 18px 50px;
-            border-radius: 50px;
-            font-size: 1.3rem;
-            font-weight: bold;
-            text-decoration: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-
-        .install-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-        }
-
-        .install-note {
-            margin-top: 20px;
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-
-        /* Terminal */
-        .terminal-section {
-            background: #1e1e1e;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 30px auto;
-            max-width: 800px;
-            text-align: left;
-            font-family: 'Courier New', monospace;
-        }
-
-        .terminal-header {
+            width: 60px;
+            height: 60px;
             display: flex;
-            gap: 8px;
-            margin-bottom: 15px;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            border-radius: 12px;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
         }
 
-        .terminal-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
+        .usecase-card:hover .usecase-icon {
+            background: rgba(0, 240, 255, 0.15);
+            box-shadow: var(--glow-cyan);
+            transform: scale(1.1);
         }
 
-        .terminal-dot.red { background: #ff5f56; }
-        .terminal-dot.yellow { background: #ffbd2e; }
-        .terminal-dot.green { background: #27c93f; }
+        .usecase-title {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
 
-        .terminal-content {
-            color: #00ff00;
+        .usecase-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+
+        .usecase-example {
+            padding: 12px 16px;
+            background: rgba(0, 240, 255, 0.05);
+            border-left: 3px solid var(--neon-cyan);
+            border-radius: 0 8px 8px 0;
             font-size: 0.9rem;
-            line-height: 1.8;
+            color: var(--neon-cyan);
+            font-family: var(--font-body);
         }
 
-        .terminal-prompt {
-            color: #00ff00;
+        .usecase-example::before {
+            content: '💡 ';
         }
 
-        .terminal-command {
-            color: #ffffff;
-        }
-
-        .terminal-output {
-            color: #cccccc;
-        }
-
-        /* Footer */
+        /* ===== Footer ===== */
         .footer {
+            padding: 60px 0;
+            border-top: 1px solid rgba(0, 240, 255, 0.1);
             text-align: center;
-            padding: 40px;
-            color: white;
-            opacity: 0.8;
         }
 
-        .footer a {
-            color: white;
+        .footer-content {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 24px;
+        }
+
+        .footer-link {
+            color: var(--text-secondary);
             text-decoration: none;
-            border-bottom: 1px solid white;
+            transition: color 0.3s ease;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .header .tagline {
-                font-size: 1rem;
-            }
-            
-            .stats {
-                flex-direction: column;
-                gap: 20px;
-            }
-            
-            .install-methods {
-                grid-template-columns: 1fr;
-            }
-            
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
+        .footer-link:hover {
+            color: var(--neon-cyan);
         }
 
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .footer-heart {
+            color: var(--neon-pink);
         }
 
-        .install-section, .features-section, .usecases-section {
-            animation: fadeIn 0.6s ease-out;
-        }
-
-        /* Toast Notification */
+        /* ===== Toast Notification ===== */
         .toast {
             position: fixed;
             bottom: 30px;
             right: 30px;
-            background: #27c93f;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            display: none;
-            z-index: 1000;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(400px); }
-            to { transform: translateX(0); }
+            padding: 16px 24px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--neon-green);
+            border-radius: 12px;
+            color: var(--neon-green);
+            font-weight: 500;
+            box-shadow: 0 0 20px rgba(5, 255, 161, 0.3);
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 10000;
         }
 
         .toast.show {
-            display: block;
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            :root {
+                --section-padding: 80px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero-title {
+                letter-spacing: 2px;
+            }
+
+            .hero-subtitle {
+                letter-spacing: 4px;
+            }
+
+            .install-methods,
+            .examples-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-card,
+            .install-card {
+                padding: 24px;
+            }
+
+            .footer-links {
+                flex-wrap: wrap;
+                gap: 16px;
+            }
+        }
+
+        /* ===== Scrollbar ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-void);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 240, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 240, 255, 0.5);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <h1>🔍 XSearch</h1>
-            <p class="tagline">智能搜索增强技能 - 为 OpenClaw 提供强大的外部信息搜索能力</p>
-            <div class="stats">
-                <div class="stat-item">
-                    <span class="stat-number">191</span>
-                    <span class="stat-label">已发现 Skills</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">10</span>
-                    <span class="stat-label">智能分类</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">3</span>
-                    <span class="stat-label">搜索策略</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">100%</span>
-                    <span class="stat-label">TypeScript</span>
+    <!-- Background Effects -->
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+    <div class="bg-glow-2"></div>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="#" class="nav-logo">XSEARCH</a>
+            <div class="nav-links">
+                <a href="#features" class="nav-link" data-i18n="nav.features">Features</a>
+                <a href="#usecases" class="nav-link" data-i18n="nav.usecases">Use Cases</a>
+                <a href="#install" class="nav-link" data-i18n="nav.install">Install</a>
+                <a href="#examples" class="nav-link" data-i18n="nav.examples">Examples</a>
+                <a href="https://github.com/moyage/xSearch" class="nav-link" target="_blank" data-i18n="nav.github">GitHub</a>
+                
+                <!-- Language Switcher -->
+                <div class="lang-switcher" id="langSwitcher">
+                    <button class="lang-btn" onclick="toggleLangDropdown()">
+                        <span class="current-flag">🌐</span>
+                        <span class="current-lang-name">English</span>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <div class="lang-dropdown">
+                        <button class="lang-option" data-lang="zh-CN" onclick="changeLang('zh-CN')">
+                            <span>🇨🇳</span> <span data-i18n="language.zh-CN">简体中文</span>
+                        </button>
+                        <button class="lang-option" data-lang="zh-TW" onclick="changeLang('zh-TW')">
+                            <span>🇹🇼</span> <span data-i18n="language.zh-TW">繁體中文</span>
+                        </button>
+                        <button class="lang-option active" data-lang="en" onclick="changeLang('en')">
+                            <span>🇺🇸</span> <span data-i18n="language.en">English</span>
+                        </button>
+                        <button class="lang-option" data-lang="ja" onclick="changeLang('ja')">
+                            <span>🇯🇵</span> <span data-i18n="language.ja">日本語</span>
+                        </button>
+                        <button class="lang-option" data-lang="ko" onclick="changeLang('ko')">
+                            <span>🇰🇷</span> <span data-i18n="language.ko">한국어</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </header>
+        </div>
+    </nav>
 
-        <!-- One Click Install -->
-        <section class="oneclick-section">
-            <h2 class="oneclick-title">🚀 一键安装到 OpenClaw</h2>
-            <p class="oneclick-desc">选择适合您的安装方式，30 秒完成部署</p>
-            
-            <div class="terminal-section">
-                <div class="terminal-header">
-                    <div class="terminal-dot red"></div>
-                    <div class="terminal-dot yellow"></div>
-                    <div class="terminal-dot green"></div>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span>⚡</span>
+                    <span>OpenClaw Skill</span>
                 </div>
-                <div class="terminal-content">
-                    <div><span class="terminal-prompt">$</span> <span class="terminal-command">git clone https://github.com/moyage/xSearch.git && cd xSearch</span></div>
-                    <div><span class="terminal-prompt">$</span> <span class="terminal-command">npm install</span></div>
-                    <div class="terminal-output">✓ 依赖安装完成</div>
-                    <div><span class="terminal-prompt">$</span> <span class="terminal-command">npm run build</span></div>
-                    <div class="terminal-output">✓ 构建成功</div>
-                    <div><span class="terminal-prompt">$</span> <span class="terminal-command">npm link</span></div>
-                    <div class="terminal-output">✓ XSearch 已链接到全局</div>
-                    <div><span class="terminal-prompt">$</span> <span class="terminal-command"># 在 OpenClaw 中使用</span></div>
-                    <div class="terminal-output" style="color: #667eea; font-weight: bold;">task(skill='xsearch', prompt='搜索任务')</div>
+                <h1 class="hero-title">XSearch</h1>
+                <p class="hero-subtitle" data-i18n="hero.subtitle">AI-Powered Search Enhancement</p>
+                <p class="hero-desc" data-i18n="hero.description">
+                    Powerful external information search and collection for OpenClaw. Supports dynamic sites, multi-source integration, and intelligent analysis.
+                </p>
+                <a href="#install" class="hero-cta" data-i18n="hero.cta">Get Started →</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="section features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">Capabilities</span>
+                <h2 class="section-title" data-i18n="features.title">Core Features</h2>
+                <p class="section-subtitle" data-i18n="features.subtitle">Powerful Search & Collection</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3 class="feature-title" data-i18n="features.search.title">Smart Search</h3>
+                    <p class="feature-desc" data-i18n="features.search.desc">
+                        Four-layer search strategy, automatically selects the optimal approach. From simple HTTP to browser rendering to distributed collection.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌊</div>
+                    <h3 class="feature-title" data-i18n="features.crawler.title">Dynamic Crawling</h3>
+                    <p class="feature-desc" data-i18n="features.crawler.desc">
+                        Supports waterfall, SPA, and AJAX sites. Resume capability for large-scale data collection.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h3 class="feature-title" data-i18n="features.analysis.title">Intelligent Analysis</h3>
+                    <p class="feature-desc" data-i18n="features.analysis.desc">
+                        Multi-source data integration, auto-generates comparison tables and analysis reports. Deep research mode supports cross-validation.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💎</div>
+                    <h3 class="feature-title" data-i18n="features.budget.title">Cost Control</h3>
+                    <p class="feature-desc" data-i18n="features.budget.desc">
+                        Token budget management with real-time consumption tracking. Smart degradation strategy for precise API cost control.
+                    </p>
                 </div>
             </div>
+        </div>
+    </section>
 
-            <button class="install-btn" onclick="copyInstallCommand()">
-                📋 复制安装命令
-            </button>
-            <p class="install-note">或者直接在 OpenClaw 中引用本地路径</p>
-        </section>
+    <!-- Use Cases Section -->
+    <section class="section usecases" id="usecases">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label" style="background: rgba(5, 255, 161, 0.1); border-color: rgba(5, 255, 161, 0.3); color: var(--neon-green);">Scenarios</span>
+                <h2 class="section-title" data-i18n="usecases.title">Use Cases</h2>
+                <p class="section-subtitle" data-i18n="usecases.subtitle">Precise solutions for different needs</p>
+            </div>
+            <div class="usecases-grid">
+                <div class="usecase-card">
+                    <div class="usecase-icon">🔬</div>
+                    <h3 class="usecase-title" data-i18n="usecases.tech.title">Tech Research</h3>
+                    <p class="usecase-desc" data-i18n="usecases.tech.desc">
+                        Quickly learn about new technologies, frameworks, or tools. Automatically collect official docs, community discussions, and best practices to generate structured technical reports.
+                    </p>
+                    <div class="usecase-example" data-i18n="usecases.tech.example">Research Rust vs Go performance comparison</div>
+                </div>
+                <div class="usecase-card">
+                    <div class="usecase-icon">📊</div>
+                    <h3 class="usecase-title" data-i18n="usecases.competitor.title">Competitor Analysis</h3>
+                    <p class="usecase-desc" data-i18n="usecases.competitor.desc">
+                        Deep analysis of competitor product features, pricing strategies, and user reviews. Auto-generates comparison matrices and differentiation recommendations.
+                    </p>
+                    <div class="usecase-example" data-i18n="usecases.competitor.example">Compare AI coding assistant features</div>
+                </div>
+                <div class="usecase-card">
+                    <div class="usecase-icon">📰</div>
+                    <h3 class="usecase-title" data-i18n="usecases.content.title">Content Aggregation</h3>
+                    <p class="usecase-desc" data-i18n="usecases.content.desc">
+                        Collect, deduplicate, and integrate content from multiple sources. Supports news, papers, blogs, social media, and other multi-channel collection.
+                    </p>
+                    <div class="usecase-example" data-i18n="usecases.content.example">Aggregate daily AI industry updates</div>
+                </div>
+                <div class="usecase-card">
+                    <div class="usecase-icon">📡</div>
+                    <h3 class="usecase-title" data-i18n="usecases.monitor.title">Data Monitoring</h3>
+                    <p class="usecase-desc" data-i18n="usecases.monitor.desc">
+                        Continuously monitor updates for specific topics, keywords, or data sources. Supports scheduled tasks and change alerts.
+                    </p>
+                    <div class="usecase-example" data-i18n="usecases.monitor.example">Monitor GitHub trending repositories</div>
+                </div>
+                <div class="usecase-card">
+                    <div class="usecase-icon">🧩</div>
+                    <h3 class="usecase-title" data-i18n="usecases.knowledge.title">Knowledge Base Building</h3>
+                    <p class="usecase-desc" data-i18n="usecases.knowledge.desc">
+                        Systematically collect domain knowledge to build a queryable knowledge base. Supports hierarchical classification and relationship establishment.
+                    </p>
+                    <div class="usecase-example" data-i18n="usecases.knowledge.example">Build machine learning algorithm knowledge graph</div>
+                </div>
+                <div class="usecase-card">
+                    <div class="usecase-icon">📈</div>
+                    <h3 class="usecase-title" data-i18n="usecases.report.title">Automated Reporting</h3>
+                    <p class="usecase-desc" data-i18n="usecases.report.desc">
+                        Regularly generate data analysis reports, trend insights, and market research. Supports multiple output formats and visual charts.
+                    </p>
+                    <div class="usecase-example" data-i18n="usecases.report.example">Generate weekly Web3 industry development report</div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        <!-- Install Methods -->
-        <section class="install-section">
-            <h2 class="install-title">📦 安装方式</h2>
+    <!-- Install Section -->
+    <section class="section" id="install">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">Setup</span>
+                <h2 class="section-title" data-i18n="install.title">Quick Install</h2>
+                <p class="section-subtitle" data-i18n="install.subtitle">Deploy in 30 seconds</p>
+            </div>
             <div class="install-methods">
                 <div class="install-card">
-                    <span class="method-tag">推荐</span>
-                    <h3>方法一：npm link</h3>
-                    <p>将 XSearch 链接到全局，可在任何 OpenClaw 项目中使用</p>
-                    <div class="code-block">
-                        <button class="copy-btn" onclick="copyCode(this)">复制</button>
-                        <pre>git clone https://github.com/moyage/xSearch.git && cd xSearch
-npm install
-npm run build
-npm link</pre>
+                    <div class="install-card-header">
+                        <span class="install-card-tag">Recommended</span>
                     </div>
-                    <p style="margin-top: 10px; color: #666; font-size: 0.9rem;">
-                        <strong>优点：</strong>全局可用，更新方便
+                    <h3 class="install-card-title" data-i18n="install.method1.title">Global Install</h3>
+                    <p class="install-card-desc" data-i18n="install.method1.desc">
+                        Available in any OpenClaw project after installation
                     </p>
+                    <div class="code-block">
+                        <button class="code-copy" onclick="copyCode(this)" data-i18n="install.copy">Copy</button>
+                        <div class="code-content">
+                            <span class="command">git clone</span> <span class="string">https://github.com/moyage/xSearch.git</span><br>
+                            <span class="command">cd</span> xSearch<br>
+                            <span class="command">npm install</span><br>
+                            <span class="command">npm run build</span><br>
+                            <span class="command">npm link</span>
+                        </div>
+                    </div>
                 </div>
-
                 <div class="install-card">
-                    <span class="method-tag">快速</span>
-                    <h3>方法二：直接引用</h3>
-                    <p>在 OpenClaw 代码中直接引用本地路径</p>
-                    <div class="code-block">
-                        <button class="copy-btn" onclick="copyCode(this)">复制</button>
-                        <pre>import { xsearchSkill } from 
-  '/Users/mlabs/Programs/xsearch/dist/skills/xsearchSkill';
-
-// 使用
-task(skill='xsearch', prompt='搜索任务')</pre>
+                    <div class="install-card-header">
+                        <span class="install-card-tag" style="background: rgba(0, 240, 255, 0.1); border-color: rgba(0, 240, 255, 0.3); color: var(--neon-cyan);">Alternative</span>
                     </div>
-                    <p style="margin-top: 10px; color: #666; font-size: 0.9rem;">
-                        <strong>优点：</strong>无需构建，即引即用
+                    <h3 class="install-card-title" data-i18n="install.method2.title">Local Import</h3>
+                    <p class="install-card-desc" data-i18n="install.method2.desc">
+                        Direct local path reference, suitable for development
                     </p>
-                </div>
-
-                <div class="install-card">
-                    <span class="method-tag">配置</span>
-                    <h3>方法三：配置导入</h3>
-                    <p>在 OpenClaw 配置文件中添加 Skill 路径</p>
                     <div class="code-block">
-                        <button class="copy-btn" onclick="copyCode(this)">复制</button>
-                        <pre>{
-  "skills": [
-    {
-      "name": "xsearch",
-      "path": "/path/to/your/xSearch"
-    }
-  ]
-}</pre>
-                    </div>
-                    <p style="margin-top: 10px; color: #666; font-size: 0.9rem;">
-                        <strong>优点：</strong>配置化管理，团队协作
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Features -->
-        <section class="features-section">
-            <h2 class="section-title">✨ 核心功能</h2>
-            <div class="features-grid">
-                <div class="feature-item">
-                    <div class="feature-icon">🔎</div>
-                    <div class="feature-title">多层级搜索策略</div>
-                    <div class="feature-desc">支持 HTTP → API → 浏览器 → 分布式四层策略，智能选择最优方案</div>
-                </div>
-
-                <div class="feature-item">
-                    <div class="feature-icon">📊</div>
-                    <div class="feature-title">智能分类系统</div>
-                    <div class="feature-desc">10个精细分类，基于关键词匹配和权重算法，准确识别金融类 Skills</div>
-                </div>
-
-                <div class="feature-item">
-                    <div class="feature-icon">🌊</div>
-                    <div class="feature-title">瀑布流采集</div>
-                    <div class="feature-desc">WaterfallCrawler 自动滚动到底，断点续传，支持大规模数据采集</div>
-                </div>
-
-                <div class="feature-item">
-                    <div class="feature-icon">🛡️</div>
-                    <div class="feature-title">反爬虫对抗</div>
-                    <div class="feature-desc">User-Agent轮换、浏览器指纹伪装、请求限速，有效对抗反爬机制</div>
-                </div>
-
-                <div class="feature-item">
-                    <div class="feature-icon">💰</div>
-                    <div class="feature-title">Token 预算管理</div>
-                    <div class="feature-desc">实时消耗追踪、预警机制、智能降级，精准控制 API 调用成本</div>
-                </div>
-
-                <div class="feature-item">
-                    <div class="feature-icon">📈</div>
-                    <div class="feature-title">实时进度追踪</div>
-                    <div class="feature-desc">流式输出、可视化进度条、阶段状态展示，告别黑盒体验</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Use Cases -->
-        <section class="usecases-section">
-            <h2 class="section-title">🎯 使用场景</h2>
-            <div class="usecase-list">
-                <div class="usecase-item">
-                    <div class="usecase-icon">⚡</div>
-                    <div class="usecase-content">
-                        <h4>快速事实查询</h4>
-                        <p>零 Token 消耗，直接获取答案，适合简单问题</p>
-                    </div>
-                </div>
-
-                <div class="usecase-item">
-                    <div class="usecase-icon">🔍</div>
-                    <div class="usecase-content">
-                        <h4>动态网站提取</h4>
-                        <p>瀑布流、SPA、AJAX 网站内容提取，支持复杂页面</p>
-                    </div>
-                </div>
-
-                <div class="usecase-item">
-                    <div class="usecase-icon">📊</div>
-                    <div class="usecase-content">
-                        <h4>多源对比分析</h4>
-                        <p>整合多个来源数据，生成对比表格和分析报告</p>
-                    </div>
-                </div>
-
-                <div class="usecase-item">
-                    <div class="usecase-icon">🔬</div>
-                    <div class="usecase-content">
-                        <h4>深度研究</h4>
-                        <p>多轮搜索、交叉验证、综合分析，适合复杂调研</p>
-                    </div>
-                </div>
-
-                <div class="usecase-item">
-                    <div class="usecase-icon">📦</div>
-                    <div class="usecase-content">
-                        <h4>大规模批量</h4>
-                        <p>批量任务队列、智能调度、断点续传，高效处理大数据</p>
-                    </div>
-                </div>
-
-                <div class="usecase-item">
-                    <div class="usecase-icon">🎨</div>
-                    <div class="usecase-content">
-                        <h4>可视化输出</h4>
-                        <p>自动生成图表、知识图谱、信息图，一图胜千言</p>
+                        <button class="code-copy" onclick="copyCode(this)" data-i18n="install.copy">Copy</button>
+                        <div class="code-content">
+                            <span class="comment">// In your OpenClaw task</span><br>
+                            <span class="command">task</span>(skill=<span class="string">'xsearch'</span>, prompt=<span class="string">'Your search query'</span>)
+                        </div>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- Quick Start -->
-        <section class="install-section">
-            <h2 class="install-title">🚀 快速开始</h2>
-            <div class="code-block" style="max-width: 800px; margin: 0 auto;">
-                <button class="copy-btn" onclick="copyCode(this)">复制</button>
-                <pre>// 基础搜索
-task(skill='xsearch', prompt='搜索 Python 3.12 新特性')
-
-// 高级配置
-task(skill='xsearch', prompt='对比分析 React 和 Vue', {
-  options: {
-    complexity: 'high',
-    maxTokens: 8000,
-    outputFormat: 'table'
-  }
-})
-
-// 批量搜索
-task(skill='xsearch', prompt='批量搜索：["AI趋势", "Web3发展", "量子计算"]')
-
-// 深度研究
-task(skill='xsearch', prompt='深度研究 AI Agent 发展趋势', {
-  options: {
-    mode: 'research',
-    depth: 'deep'
-  }
-})</pre>
+    <!-- Examples Section -->
+    <section class="section examples" id="examples">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label" style="background: rgba(189, 0, 255, 0.1); border-color: rgba(189, 0, 255, 0.3); color: var(--neon-purple);">Code</span>
+                <h2 class="section-title" data-i18n="examples.title">Usage Examples</h2>
+                <p class="section-subtitle" data-i18n="examples.subtitle">A few lines of code to enable intelligent search</p>
             </div>
-        </section>
+            <div class="examples-grid">
+                <div class="example-card">
+                    <div class="example-header">
+                        <h3 class="example-title" data-i18n="examples.basic.title">Basic Search</h3>
+                        <p class="example-desc" data-i18n="examples.basic.desc">Simplest usage</p>
+                    </div>
+                    <div class="example-code">
+                        <div class="code-content">
+                            <span class="comment">// Quick fact lookup</span><br>
+                            <span class="command">task</span>(skill=<span class="string">'xsearch'</span>, <br>
+                            &nbsp;&nbsp;prompt=<span class="string">'Python 3.12 new features'</span>)
+                        </div>
+                    </div>
+                </div>
+                <div class="example-card">
+                    <div class="example-header">
+                        <h3 class="example-title" data-i18n="examples.advanced.title">Advanced Config</h3>
+                        <p class="example-desc" data-i18n="examples.advanced.desc">Customize search parameters</p>
+                    </div>
+                    <div class="example-code">
+                        <div class="code-content">
+                            <span class="command">task</span>(skill=<span class="string">'xsearch'</span>, <br>
+                            &nbsp;&nbsp;prompt=<span class="string">'Compare React and Vue'</span>, {<br>
+                            &nbsp;&nbsp;options: {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;complexity: <span class="string">'high'</span>,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;maxTokens: <span class="string">8000</span>,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;outputFormat: <span class="string">'table'</span><br>
+                            &nbsp;&nbsp;}<br>
+                            })
+                        </div>
+                    </div>
+                </div>
+                <div class="example-card">
+                    <div class="example-header">
+                        <h3 class="example-title" data-i18n="examples.batch.title">Batch Search</h3>
+                        <p class="example-desc" data-i18n="examples.batch.desc">Search multiple topics simultaneously</p>
+                    </div>
+                    <div class="example-code">
+                        <div class="code-content">
+                            <span class="command">task</span>(skill=<span class="string">'xsearch'</span>, <br>
+                            &nbsp;&nbsp;prompt=<span class="string">'Research AI Agent trends'</span>, {<br>
+                            &nbsp;&nbsp;options: {<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;mode: <span class="string">'research'</span>,<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;depth: <span class="string">'deep'</span><br>
+                            &nbsp;&nbsp;}<br>
+                            })
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        <!-- Footer -->
-        <footer class="footer">
-            <p>XSearch v1.0.0 | <a href="#">GitHub</a> | <a href="#">文档</a> | <a href="#">报告问题</a></p>
-            <p style="margin-top: 10px; font-size: 0.9rem;">Made with ❤️ for OpenClaw</p>
-        </footer>
-    </div>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="https://github.com/moyage/xSearch" class="footer-link" target="_blank">GitHub</a>
+                <a href="#" class="footer-link">Documentation</a>
+                <a href="#" class="footer-link">Issues</a>
+            </div>
+            <p class="footer-content">
+                <span data-i18n="footer.copyright">© 2026 XSearch. Built for OpenClaw.</span><br>
+                <span data-i18n="footer.made">Made with</span> <span class="footer-heart">♥</span> <span data-i18n="footer.and">and</span> ⚡ <span data-i18n="footer.craft">craft</span>
+            </p>
+        </div>
+    </footer>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="toast">已复制到剪贴板！</div>
+    <!-- Toast -->
+    <div class="toast" id="toast">Copied!</div>
 
+    <!-- Scripts -->
+    <script src="i18n.js"></script>
     <script>
+        // Load translations and initialize
+        fetch('translations.json')
+            .then(res => res.json())
+            .then(data => {
+                window.i18n.init(data);
+            })
+            .catch(err => console.error('[i18n] Failed to load translations:', err));
+
+        // Language dropdown toggle
+        function toggleLangDropdown() {
+            document.getElementById('langSwitcher').classList.toggle('active');
+        }
+
+        // Change language
+        function changeLang(lang) {
+            window.i18n.setLanguage(lang);
+            document.getElementById('langSwitcher').classList.remove('active');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#langSwitcher')) {
+                document.getElementById('langSwitcher').classList.remove('active');
+            }
+        });
+
+        // Copy code to clipboard
         function copyCode(btn) {
-            const codeBlock = btn.parentElement.querySelector('pre');
+            const codeBlock = btn.parentElement.querySelector('.code-content');
             const text = codeBlock.innerText;
             
             navigator.clipboard.writeText(text).then(() => {
-                showToast('代码已复制到剪贴板！');
-                btn.textContent = '已复制';
+                const originalText = btn.textContent;
+                btn.textContent = window.i18n.t ? window.i18n.t('install.copied') : 'Copied!';
+                showToast();
+                
                 setTimeout(() => {
-                    btn.textContent = '复制';
+                    btn.textContent = originalText;
                 }, 2000);
             });
         }
 
-        function copyInstallCommand() {
-            const command = `git clone https://github.com/moyage/xSearch.git && cd xSearch && npm install && npm run build && npm link`;
-            navigator.clipboard.writeText(command).then(() => {
-                showToast('安装命令已复制！');
-            });
-        }
-
-        function showToast(message) {
+        // Show toast notification
+        function showToast() {
             const toast = document.getElementById('toast');
-            toast.textContent = message;
             toast.classList.add('show');
             setTimeout(() => {
                 toast.classList.remove('show');
             }, 3000);
         }
 
-        // 添加平滑滚动
+        // Smooth scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             });
         });
 
-        // 添加页面加载动画
-        window.addEventListener('load', () => {
-            document.body.style.opacity = '0';
-            document.body.style.transition = 'opacity 0.5s';
-            setTimeout(() => {
-                document.body.style.opacity = '1';
-            }, 100);
+        // Update language display when language changes
+        window.addEventListener('i18n:languageChanged', (e) => {
+            const meta = window.i18n.getLanguageMeta();
+            const lang = e.detail.language;
+            
+            document.querySelector('.current-flag').textContent = meta[lang].flag;
+            document.querySelector('.current-lang-name').textContent = meta[lang].name;
+            
+            // Update active state in dropdown
+            document.querySelectorAll('.lang-option').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
         });
     </script>
 </body>
