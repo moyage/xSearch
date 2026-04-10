@@ -8,7 +8,9 @@
     "build": "tsc",
     "prepare": "npm run build",
     "test": "jest",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "build:mcp": "node build-mcp.js",
+    "start:mcp": "node dist/mcp.js"
   },
   "keywords": [
     "openclaw",
@@ -33,8 +35,10 @@
     "cheerio": "^1.0.0-rc.12"
   },
   "devDependencies": {
+    "@modelcontextprotocol/server": "^2.0.0-alpha.2",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.8.0",
+    "esbuild": "^0.28.0",
     "fintec-agent-laws": "file:../labs-teamwork-spec",
     "jest": "^30.3.0",
     "ts-jest": "^29.4.9",
@@ -73,6 +77,32 @@
         "type": "object",
         "description": "Configuration for the Protocol Hijacker mode (Base URL, Pagination Rules)",
         "required": false
+      }
+    },
+    "mcpServer": {
+      "command": "node",
+      "args": [
+        "dist/mcp.js"
+      ],
+      "description": "XSearch MCP Server - API hijacking and autonomous search capabilities",
+      "tools": [
+        {
+          "name": "xsearch_hijack_api",
+          "description": "API hijacking with pagination lie detection and rate limit handling"
+        },
+        {
+          "name": "xsearch_autonomous_probe",
+          "description": "Autonomous intelligent search with query distillation and semantic reranking"
+        }
+      ]
+    },
+    "mcpServers": {
+      "xsearch": {
+        "command": "node",
+        "args": [
+          "${__dirname}/dist/mcp.js"
+        ],
+        "env": {}
       }
     }
   }
