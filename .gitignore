@@ -9,3 +9,5 @@ retest-v2-results.json
 tavily-results.json
 strategy-analysis.json
 demo-report.json
+
+.agent-state/
